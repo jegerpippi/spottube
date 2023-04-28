@@ -41,8 +41,9 @@ class AlbumCard extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, ref) {
     final playlist = ref.watch(PlaylistQueueNotifier.provider);
-    final playing = useStream(PlaylistQueueNotifier.playing).data ??
-        PlaylistQueueNotifier.isPlaying;
+    final playing =
+        useStream(PlaylistQueueNotifier.playing, initialData: false).data ??
+            false;
     final playlistNotifier = ref.watch(PlaylistQueueNotifier.notifier);
     final queryClient = useQueryClient();
     final query = queryClient

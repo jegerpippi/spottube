@@ -1,19 +1,14 @@
-import 'package:audio_service/audio_service.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spotify/spotify.dart';
+import 'package:simple_audio/simple_audio.dart';
+import 'package:spotify/spotify.dart' hide PlaybackState;
 import 'package:spotube/models/local_track.dart';
 import 'package:spotube/models/spotube_track.dart';
 import 'package:spotube/extensions/track.dart';
 import 'package:spotube/provider/blacklist_provider.dart';
 import 'package:spotube/provider/user_preferences_provider.dart';
 import 'package:spotube/services/audio_player.dart';
-import 'package:spotube/services/linux_audio_service.dart';
-import 'package:spotube/services/mobile_audio_service.dart';
-import 'package:spotube/services/windows_audio_service.dart';
 import 'package:spotube/utils/persisted_state_notifier.dart';
-import 'package:spotube/utils/platform.dart';
 import 'package:spotube/utils/type_conversion_utils.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart' hide Playlist;
 import 'package:collection/collection.dart';
@@ -136,9 +131,6 @@ class PlaylistQueue {
 
 class PlaylistQueueNotifier extends PersistedStateNotifier<PlaylistQueue?> {
   final Ref ref;
-  MobileAudioService? mobileService;
-  LinuxAudioService? linuxService;
-  WindowsAudioService? windowsService;
 
   static final provider =
       StateNotifierProvider<PlaylistQueueNotifier, PlaylistQueue?>(
@@ -152,49 +144,29 @@ class PlaylistQueueNotifier extends PersistedStateNotifier<PlaylistQueue?> {
   }
 
   void configure() async {
-    if (kIsMobile || kIsMacOS) {
-      mobileService = await AudioService.init(
-        builder: () => MobileAudioService(
-          this,
-          ref.read(VolumeProvider.provider.notifier),
-        ),
-        config: const AudioServiceConfig(
-          androidNotificationChannelId: 'com.krtirtho.Spotube',
-          androidNotificationChannelName: 'Spotube',
-          androidNotificationOngoing: true,
-        ),
-      );
-    }
-    if (kIsLinux) {
-      linuxService = LinuxAudioService(ref, this);
-    }
-    if (kIsWindows) {
-      windowsService = WindowsAudioService(ref, this);
-    }
-    addListener((state) {
-      linuxService?.player.updateProperties();
-    });
-
-    audioPlayer.onPlayerStateChanged.listen((event) {
-      linuxService?.player.updateProperties();
-    });
-
-    audioPlayer.onPlayerComplete.listen((event) async {
-      if (!isLoaded) return;
-      if (state!.isLooping) {
-        await audioPlayer.seek(Duration.zero);
-        await audioPlayer.resume();
-      } else {
-        await next();
+    audioPlayer.playbackStateStream.listen((event) async {
+      switch (event) {
+        case PlaybackState.done:
+          {
+            if (!isLoaded) return;
+            if (state!.isLooping) {
+              await audioPlayer.seek(0);
+              await audioPlayer.play();
+            } else {
+              await next();
+            }
+            break;
+          }
+        default:
       }
     });
 
     bool isPreSearching = false;
 
-    audioPlayer.onPositionChanged.listen((pos) async {
+    audioPlayer.progressStateStream.listen((event) async {
       if (!isLoaded) return;
-      await linuxService?.player.updateProperties();
-      final currentDuration = await audioPlayer.getDuration() ?? Duration.zero;
+      final currentDuration = Duration(seconds: event.duration);
+      final pos = Duration(seconds: event.position);
 
       // skip all the activeTrack.skipSegments
       if (state?.isLoading != true &&
@@ -205,7 +177,7 @@ class PlaylistQueueNotifier extends PersistedStateNotifier<PlaylistQueue?> {
             in (state!.activeTrack as SpotubeTrack).skipSegments) {
           if ((pos.inSeconds >= segment["start"]! &&
               pos.inSeconds < segment["end"]!)) {
-            await audioPlayer.seek(Duration(seconds: segment["end"]!));
+            await audioPlayer.seek(segment["end"]!);
           }
         }
       }
@@ -218,12 +190,14 @@ class PlaylistQueueNotifier extends PersistedStateNotifier<PlaylistQueue?> {
           !isPreSearching) {
         isPreSearching = true;
         final tracks = state!.tracks.toList();
-        tracks[state!.active + 1] = await SpotubeTrack.fetchFromTrack(
+        final newTrack = await SpotubeTrack.fetchFromTrack(
           state!.tracks.elementAt(state!.active + 1),
           preferences,
         );
+        tracks[state!.active + 1] = newTrack;
         state = state!.copyWith(tracks: Set.from(tracks));
         isPreSearching = false;
+        await audioPlayer.preload(newTrack.ytUri);
       }
     });
   }
@@ -238,16 +212,19 @@ class PlaylistQueueNotifier extends PersistedStateNotifier<PlaylistQueue?> {
   bool get isLoaded => state != null;
 
   // redirectors
-  static bool get isPlaying => audioPlayer.state == PlayerState.playing;
-  static bool get isPaused => audioPlayer.state == PlayerState.paused;
-  static bool get isStopped => audioPlayer.state == PlayerState.stopped;
+  Future<bool> get isPlaying => audioPlayer.isPlaying;
+  Future<bool> get isStopped => audioPlayer.hasPreloaded;
 
   static Stream<Duration> get duration =>
-      audioPlayer.onDurationChanged.asBroadcastStream();
-  static Stream<Duration> get position =>
-      audioPlayer.onPositionChanged.asBroadcastStream();
-  static Stream<bool> get playing => audioPlayer.onPlayerStateChanged
-      .map((event) => event == PlayerState.playing)
+      audioPlayer.progressStateStream.map((event) {
+        return Duration(seconds: event.duration);
+      }).asBroadcastStream();
+  static Stream<Duration> get position => audioPlayer.progressStateStream
+      .map((event) => Duration(seconds: event.position))
+      .asBroadcastStream();
+
+  static Stream<bool> get playing => audioPlayer.playbackStateStream
+      .map((event) => event == PlaybackState.play)
       .asBroadcastStream();
 
   List<Video> get siblings => state?.isLoading == false
@@ -352,27 +329,24 @@ class PlaylistQueueNotifier extends PersistedStateNotifier<PlaylistQueue?> {
   Future<void> play() async {
     if (!isLoaded) return;
     await pause();
-    await mobileService?.session?.setActive(true);
-    final mediaItem = MediaItem(
-      id: state!.activeTrack.id!,
+    // await mobileService?.session?.setActive(true);
+    final mediaItem = Metadata(
       title: state!.activeTrack.name!,
       album: state!.activeTrack.album?.name,
       artist: TypeConversionUtils.artists_X_String(
           state!.activeTrack.artists ?? <ArtistSimple>[]),
-      artUri: Uri.parse(
-        TypeConversionUtils.image_X_UrlString(
-          state!.activeTrack.album?.images,
-          placeholder: ImagePlaceholder.online,
-        ),
+      artUri: TypeConversionUtils.image_X_UrlString(
+        state!.activeTrack.album?.images,
+        placeholder: ImagePlaceholder.online,
       ),
-      duration: state!.activeTrack.duration,
     );
-    mobileService?.addItem(mediaItem);
-    windowsService?.addTrack(state!.activeTrack);
+
+    await audioPlayer.setMetadata(mediaItem);
+
     if (state!.activeTrack is LocalTrack) {
-      await audioPlayer.play(
-        DeviceFileSource((state!.activeTrack as LocalTrack).path),
-        mode: PlayerMode.mediaPlayer,
+      await audioPlayer.open(
+        (state!.activeTrack as LocalTrack).path,
+        autoplay: true,
       );
       return;
     }
@@ -393,21 +367,17 @@ class PlaylistQueueNotifier extends PersistedStateNotifier<PlaylistQueue?> {
       );
     }
 
-    mobileService?.addItem(mediaItem.copyWith(
-      duration: (state!.activeTrack as SpotubeTrack).ytTrack.duration,
-    ));
-
     final cached =
         await DefaultCacheManager().getFileFromCache(state!.activeTrack.id!);
     if (preferences.predownload && cached != null) {
-      await audioPlayer.play(
-        DeviceFileSource(cached.file.path),
-        mode: PlayerMode.mediaPlayer,
+      await audioPlayer.open(
+        cached.file.path,
+        autoplay: true,
       );
     } else {
-      await audioPlayer.play(
-        UrlSource((state!.activeTrack as SpotubeTrack).ytUri),
-        mode: PlayerMode.mediaPlayer,
+      await audioPlayer.open(
+        (state!.activeTrack as SpotubeTrack).ytUri,
+        autoplay: true,
       );
     }
   }
@@ -443,11 +413,11 @@ class PlaylistQueueNotifier extends PersistedStateNotifier<PlaylistQueue?> {
   }
 
   Future<void> resume() {
-    return audioPlayer.resume();
+    return audioPlayer.play();
   }
 
   Future<void> stop() async {
-    (mobileService)?.session?.setActive(false);
+    // (mobileService)?.session?.setActive(false);
     state = null;
 
     return audioPlayer.stop();
@@ -483,7 +453,7 @@ class PlaylistQueueNotifier extends PersistedStateNotifier<PlaylistQueue?> {
 
   Future<void> seek(Duration position) async {
     if (!isLoaded) return;
-    await audioPlayer.seek(position);
+    await audioPlayer.seek(position.inSeconds);
     await resume();
   }
 
@@ -517,12 +487,6 @@ class PlaylistQueueNotifier extends PersistedStateNotifier<PlaylistQueue?> {
   @override
   Map<String, dynamic> toJson() {
     return state?.toJson() ?? {};
-  }
-
-  @override
-  void dispose() {
-    windowsService?.dispose();
-    super.dispose();
   }
 }
 

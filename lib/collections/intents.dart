@@ -27,7 +27,7 @@ class PlayPauseAction extends Action<PlayPauseIntent> {
     final playlistNotifier = intent.ref.read(PlaylistQueueNotifier.notifier);
     if (playlist == null) {
       return null;
-    } else if (!PlaylistQueueNotifier.isPlaying) {
+    } else if (!await playlistNotifier.isPlaying) {
       await playlistNotifier.play();
     } else {
       await playlistNotifier.pause();
@@ -103,8 +103,7 @@ class SeekAction extends Action<SeekIntent> {
       );
       return null;
     }
-    final position =
-        (await audioPlayer.getCurrentPosition() ?? Duration.zero).inSeconds;
+    final position = (await audioPlayer.progressStateStream.first).position;
     await playlistNotifier.seek(
       Duration(
         seconds: intent.forward ? position + 5 : position - 5,

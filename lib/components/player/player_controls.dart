@@ -42,8 +42,7 @@ class PlayerControls extends HookConsumerWidget {
         []);
     final playlist = ref.watch(PlaylistQueueNotifier.provider);
     final playlistNotifier = ref.watch(PlaylistQueueNotifier.notifier);
-    final playing = useStream(PlaylistQueueNotifier.playing).data ??
-        PlaylistQueueNotifier.isPlaying;
+    final playing = useStream(PlaylistQueueNotifier.playing).data ?? false;
     final theme = Theme.of(context);
 
     final isDominantColorDark = ThemeData.estimateBrightnessForColor(

@@ -1,3 +1,3 @@
-import 'package:audioplayers/audioplayers.dart';
+import 'package:simple_audio/simple_audio.dart';
 
-final audioPlayer = AudioPlayer();
+final audioPlayer = SimpleAudio();

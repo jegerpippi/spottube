@@ -3,11 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  audioplayers_linux
   catcher
   flutter_secure_storage_linux
   local_notifier
   screen_retriever
+  simple_audio
   system_theme
   system_tray
   url_launcher_linux

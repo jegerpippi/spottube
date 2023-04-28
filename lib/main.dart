@@ -13,6 +13,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:metadata_god/metadata_god.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simple_audio/simple_audio.dart';
 import 'package:spotube/components/shared/dialogs/replace_downloaded_dialog.dart';
 import 'package:spotube/entities/cache_track.dart';
 import 'package:spotube/collections/routes.dart';
@@ -20,7 +21,6 @@ import 'package:spotube/collections/intents.dart';
 import 'package:spotube/models/logger.dart';
 import 'package:spotube/provider/downloader_provider.dart';
 import 'package:spotube/provider/user_preferences_provider.dart';
-import 'package:spotube/services/audio_player.dart';
 import 'package:spotube/services/pocketbase.dart';
 import 'package:spotube/services/youtube.dart';
 import 'package:spotube/themes/theme.dart';
@@ -74,6 +74,20 @@ Future<void> main(List<String> rawArgs) async {
       backgroundColor: Colors.transparent,
       minimumSize: const Size(300, 700),
     ),
+  );
+
+  await SimpleAudio.init(
+    useMediaController: true,
+    shouldNormalizeVolume: true,
+    dbusName: "oss.krtirtho.Spotube",
+    actions: [
+      MediaControlAction.skipPrev,
+      MediaControlAction.playPause,
+      MediaControlAction.skipNext,
+    ],
+    androidNotificationIconPath: "mipmap/ic_launcher",
+    androidCompactActions: [1, 2, 3],
+    applePreferSkipButtons: true,
   );
 
   await SystemTheme.accentColor.load();
@@ -194,7 +208,6 @@ class SpotubeState extends ConsumerState<Spotube> {
     /// For enabling hot reload for audio player
     useEffect(() {
       return () {
-        audioPlayer.dispose();
         youtube.close();
       };
     }, []);

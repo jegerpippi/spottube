@@ -27,8 +27,7 @@ class PlayerOverlay extends HookConsumerWidget {
     );
     final playlistNotifier = ref.watch(PlaylistQueueNotifier.notifier);
     final playlist = ref.watch(PlaylistQueueNotifier.provider);
-    final playing = useStream(PlaylistQueueNotifier.playing).data ??
-        PlaylistQueueNotifier.isPlaying;
+    final playing = useStream(PlaylistQueueNotifier.playing).data ?? false;
 
     final theme = Theme.of(context);
     final textColor = theme.colorScheme.primary;
