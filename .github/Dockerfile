@@ -26,7 +26,7 @@ RUN wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/downl
 
 
 # Copy over all the repository files from the host into the container
-COPY .. .
+COPY ./ ./
 
 # Run flutter build for Linux ARM
 RUN alias dpkg-deb="dpkg-deb --Zxz" &&\
