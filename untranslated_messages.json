@@ -1,78 +1,56 @@
 {
   "bn": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ],
 
   "ca": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ],
 
   "de": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ],
 
   "es": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ],
 
   "fr": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ],
 
   "hi": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ],
 
   "ja": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ],
 
   "pl": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ],
 
   "pt": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ],
 
   "ru": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ],
 
   "zh": [
-    "update_playlist",
-    "update",
-    "crunching_results",
-    "search_to_get_results"
+    "use_amoled_dark_theme",
+    "normalize_audio"
   ]
 }

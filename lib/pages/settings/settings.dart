@@ -253,6 +253,12 @@ class SettingsPage extends HookConsumerWidget {
                             }
                           },
                         ),
+                        SwitchListTile(
+                          secondary: const Icon(SpotubeIcons.amoled),
+                          title: Text(context.l10n.use_amoled_dark_theme),
+                          value: preferences.amoledDarkTheme,
+                          onChanged: preferences.setAmoledDarkTheme,
+                        ),
                         ListTile(
                           leading: const Icon(SpotubeIcons.palette),
                           title: Text(context.l10n.accent_color),
@@ -441,6 +447,13 @@ class SettingsPage extends HookConsumerWidget {
                             GoRouter.of(context).push("/settings/blacklist");
                           },
                           trailing: const Icon(SpotubeIcons.angleRight),
+                        ),
+                        SwitchListTile(
+                          secondary: const Icon(SpotubeIcons.playlistRemove),
+                          title: Text(context.l10n.normalize_audio),
+                          subtitle: Text(context.l10n.blacklist_description),
+                          value: preferences.normalizeAudio,
+                          onChanged: preferences.setNormalizeAudio,
                         ),
                       ],
                     ),

@@ -10,6 +10,7 @@ import 'package:spotube/components/settings/color_scheme_picker_dialog.dart';
 import 'package:spotube/models/matched_track.dart';
 import 'package:spotube/provider/palette_provider.dart';
 import 'package:spotube/provider/proxy_playlist/proxy_playlist_provider.dart';
+import 'package:spotube/services/audio_player/audio_player.dart';
 
 import 'package:spotube/utils/persisted_change_notifier.dart';
 import 'package:spotube/utils/platform.dart';
@@ -68,6 +69,10 @@ class UserPreferences extends PersistedChangeNotifier {
 
   bool systemTitleBar;
 
+  bool amoledDarkTheme;
+
+  bool normalizeAudio;
+
   final Ref ref;
 
   UserPreferences(
@@ -89,6 +94,8 @@ class UserPreferences extends PersistedChangeNotifier {
     this.skipNonMusic = true,
     this.youtubeApiType = YoutubeApiType.youtube,
     this.systemTitleBar = false,
+    this.amoledDarkTheme = false,
+    this.normalizeAudio = true,
   }) : super() {
     if (downloadLocation.isEmpty && !kIsWeb) {
       _getDefaultDownloadDirectory().then(
@@ -210,6 +217,19 @@ class UserPreferences extends PersistedChangeNotifier {
     updatePersistence();
   }
 
+  void setAmoledDarkTheme(bool isAmoled) {
+    amoledDarkTheme = isAmoled;
+    notifyListeners();
+    updatePersistence();
+  }
+
+  void setNormalizeAudio(bool normalize) {
+    normalizeAudio = normalize;
+    audioPlayer.setAudioNormalization(normalize);
+    notifyListeners();
+    updatePersistence();
+  }
+
   Future<String> _getDefaultDownloadDirectory() async {
     if (kIsAndroid) return "/storage/emulated/0/Download/Spotube";
 
@@ -274,6 +294,11 @@ class UserPreferences extends PersistedChangeNotifier {
     systemTitleBar = map["systemTitleBar"] ?? systemTitleBar;
     // updates the title bar
     setSystemTitleBar(systemTitleBar);
+
+    amoledDarkTheme = map["amoledDarkTheme"] ?? amoledDarkTheme;
+
+    normalizeAudio = map["normalizeAudio"] ?? normalizeAudio;
+    audioPlayer.setAudioNormalization(normalizeAudio);
   }
 
   @override
@@ -297,6 +322,8 @@ class UserPreferences extends PersistedChangeNotifier {
       "skipNonMusic": skipNonMusic,
       "youtubeApiType": youtubeApiType.name,
       'systemTitleBar': systemTitleBar,
+      "amoledDarkTheme": amoledDarkTheme,
+      "normalizeAudio": normalizeAudio,
     };
   }
 

@@ -1,7 +1,6 @@
 import 'package:catcher/catcher.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:fl_query/fl_query.dart';
-import 'package:fl_query_devtools/fl_query_devtools.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -163,6 +162,8 @@ class SpotubeState extends ConsumerState<Spotube> {
         ref.watch(userPreferencesProvider.select((s) => s.themeMode));
     final accentMaterialColor =
         ref.watch(userPreferencesProvider.select((s) => s.accentColorScheme));
+    final isAmoledTheme =
+        ref.watch(userPreferencesProvider.select((s) => s.amoledDarkTheme));
     final locale = ref.watch(userPreferencesProvider.select((s) => s.locale));
     final paletteColor =
         ref.watch(paletteProvider.select((s) => s?.dominantColor?.color));
@@ -182,12 +183,16 @@ class SpotubeState extends ConsumerState<Spotube> {
     useDisableBatteryOptimizations();
 
     final lightTheme = useMemoized(
-      () => theme(paletteColor ?? accentMaterialColor, Brightness.light),
+      () => theme(paletteColor ?? accentMaterialColor, Brightness.light, false),
       [paletteColor, accentMaterialColor],
     );
     final darkTheme = useMemoized(
-      () => theme(paletteColor ?? accentMaterialColor, Brightness.dark),
-      [paletteColor, accentMaterialColor],
+      () => theme(
+        paletteColor ?? accentMaterialColor,
+        Brightness.dark,
+        isAmoledTheme,
+      ),
+      [paletteColor, accentMaterialColor, isAmoledTheme],
     );
 
     return MaterialApp.router(

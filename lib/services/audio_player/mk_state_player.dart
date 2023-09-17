@@ -4,7 +4,6 @@ import 'package:catcher/catcher.dart';
 import 'package:collection/collection.dart';
 import 'package:media_kit/media_kit.dart';
 // ignore: implementation_imports
-import 'package:media_kit/src/models/playable.dart';
 import 'package:spotube/services/audio_player/playback_state.dart';
 
 /// MediaKit [Player] by default doesn't have a state stream.
@@ -124,7 +123,9 @@ class MkPlayerWithState extends Player {
     _loopModeStream.add(playlistMode);
   }
 
+  @override
   Future<void> stop() async {
+    await super.stop();
     await pause();
     await seek(Duration.zero);
 
@@ -316,5 +317,15 @@ class MkPlayerWithState extends Player {
       medias: newMedias,
       index: newMedias.indexOf(_playlist!.medias[_playlist!.index]),
     );
+  }
+
+  NativePlayer get nativePlayer => platform as NativePlayer;
+
+  Future<void> setAudioNormalization(bool normalize) async {
+    if (normalize) {
+      await nativePlayer.setProperty('af', 'dynaudnorm=g=5:f=250:r=0.9:p=0.5');
+    } else {
+      await nativePlayer.setProperty('af', '');
+    }
   }
 }
