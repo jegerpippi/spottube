@@ -188,6 +188,85 @@ jobs:
           name: Spotube-Release-Binaries
           path: dist/
 
+  linux_arm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2.10.0
+        with:
+          cache: true
+          flutter-version: ${{ env.FLUTTER_VERSION  }}
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+        with:
+          platforms: linux/arm64
+
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y tar clang cmake ninja-build pkg-config libgtk-3-dev make python3-pip python3-setuptools desktop-file-utils libgdk-pixbuf2.0-dev fakeroot strace fuse libunwind-dev locate patchelf gir1.2-appindicator3-0.1 libappindicator3-1 libappindicator3-dev libsecret-1-0 libjsoncpp25 libsecret-1-dev libjsoncpp-dev libnotify-bin libnotify-dev mpv libmpv-dev
+
+      - name: Replace pubspec version and BUILD_VERSION Env (nightly)
+        if: ${{ inputs.channel == 'nightly' }}
+        run: |
+          curl -sS https://webi.sh/yq | sh
+          yq -i '.version |= sub("\+\d+", "+${{ inputs.channel }}.")' pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+          echo "BUILD_VERSION=${{ inputs.version }}+${{ inputs.channel  }}.${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: BUILD_VERSION Env (stable)
+        if: ${{ inputs.channel == 'stable' }}
+        run: |
+          echo "BUILD_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+
+      - name: Create Stable .env
+        if: ${{ inputs.channel == 'stable' }}
+        run: echo '${{ secrets.DOTENV_RELEASE }}' > .env
+
+      - name: Create Nightly .env
+        if: ${{ inputs.channel == 'nightly' }}
+        run: echo '${{ secrets.DOTENV_NIGHTLY }}' > .env
+
+      - name: Replace Version in files
+        run: |
+          sed -i 's|%{{APPDATA_RELEASE}}%|<release version="${{ env.BUILD_VERSION }}" date="${{ steps.date.outputs.date }}" />|' linux/com.github.KRTirtho.Spotube.appdata.xml
+          echo "build_arch: aarch64" >> linux/packaging/rpm/make_config.yaml
+
+      - name: Generate Secrets
+        run: |
+          flutter config --enable-linux-desktop
+          flutter pub get
+          dart run build_runner build --delete-conflicting-outputs --enable-experiment=records,patterns
+
+      - name: Setup Docker build
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+          docker buildx create --name spotube_builder --use
+          docker buildx inspect spotube_builder --bootstrap
+
+      - name: Run Docker build
+        run: |
+          docker buildx build -t spotube_arm:latest .github \
+          --platform linux/arm64 \
+          --build-arg BUILD_VERSION=${{ env.BUILD_VERSION }}
+          docker run -v $(pwd)/bundle:/host/app/bundle spotube_arm:latest
+
+      - name: Debug With SSH When fails
+        if: ${{ failure() && inputs.debug && inputs.channel == 'nightly' }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Spotube-Release-Binaries
+          path: bundle/
+
   android:
     runs-on: ubuntu-latest
     steps:
