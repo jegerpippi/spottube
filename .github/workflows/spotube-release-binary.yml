@@ -201,6 +201,8 @@ jobs:
       - uses: docker/setup-buildx-action@v3
         with:
           platforms: linux/arm64
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
 
       - name: Get current date
         id: date
@@ -251,7 +253,7 @@ jobs:
 
       - name: Run Docker build
         run: |
-          docker buildx build -t spotube_arm:latest .github \
+          docker buildx build -t spotube_arm:latest -f .github/Dockerfile . \
           --platform linux/arm64 \
           --build-arg BUILD_VERSION=${{ env.BUILD_VERSION }}
           docker run -v $(pwd)/bundle:/host/app/bundle spotube_arm:latest
