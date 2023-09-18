@@ -254,6 +254,7 @@ jobs:
       - name: Run Docker build
         run: |
           docker buildx build -t spotube_arm:latest -f .github/Dockerfile . \
+          --cap-add SYS_ADMIN --cap-add MKNOD --device /dev/fuse:mrw \
           --platform linux/arm64 \
           --build-arg BUILD_VERSION=${{ env.BUILD_VERSION }}
           docker run -v $(pwd)/bundle:/host/app/bundle spotube_arm:latest

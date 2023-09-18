@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Update and install necessary dependencies
 RUN apt-get update && \
-  apt-get install -y wget curl git unzip tar clang cmake ninja-build pkg-config libgtk-3-dev libglu1-mesa-dev make python3-pip python3-setuptools desktop-file-utils libgdk-pixbuf2.0-dev fakeroot strace fuse libunwind-dev locate patchelf gir1.2-appindicator3-0.1 libappindicator3-1 libappindicator3-dev libsecret-1-0 libjsoncpp25 libsecret-1-dev libjsoncpp-dev libnotify-bin libnotify-dev mpv libmpv-dev rpm
+  apt-get install -y wget curl git unzip tar clang cmake ninja-build pkg-config libgtk-3-dev libglu1-mesa-dev make python3-pip python3-setuptools desktop-file-utils libgdk-pixbuf2.0-dev fakeroot strace fuse libunwind-dev locate patchelf gir1.2-appindicator3-0.1 libappindicator3-1 libappindicator3-dev libsecret-1-0 libjsoncpp25 libsecret-1-dev libjsoncpp-dev libnotify-bin libnotify-dev mpv libmpv-dev rpm libfuse2 glib2.0
 
 # Define the Flutter SDK paths
 ENV PATH="${PATH}:/opt/flutter/bin:/root/.pub-cache/bin"
@@ -22,6 +22,7 @@ RUN git clone https://github.com/flutter/flutter.git --single-branch --branch=st
 
 RUN wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-aarch64.AppImage" &&\
   chmod +x appimagetool &&\
+  sed -i "s|AI\x02|\x00\x00\x00|" appimagetool &&\
   mv appimagetool /usr/local/bin
 
 
@@ -29,11 +30,10 @@ RUN wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/downl
 COPY ./ ./
 
 # Run flutter build for Linux ARM
-RUN alias dpkg-deb="dpkg-deb --Zxz" &&\
-  flutter_distributor package --platform=linux --targets=deb &&\
-  flutter_distributor package --platform=linux --targets=appimage &&\
-  flutter_distributor package --platform=linux --targets=rpm &&\
-  make tar VERSION=${BUILD_VERSION} ARCH=arm64 PKG_ARCH=aarch64
+RUN alias dpkg-deb="dpkg-deb --Zxz" && flutter_distributor package --platform=linux --targets=deb
+RUN flutter_distributor package --platform=linux --targets=appimage
+RUN flutter_distributor package --platform=linux --targets=rpm
+RUN make tar VERSION=${BUILD_VERSION} ARCH=arm64 PKG_ARCH=aarch64
 
 # Move artifacts
 RUN mkdir bundle &&\
