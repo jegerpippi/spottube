@@ -256,7 +256,7 @@ jobs:
           docker buildx build -t spotube_arm:latest -f .github/Dockerfile . \
           --platform linux/arm64 \
           --build-arg BUILD_VERSION=${{ env.BUILD_VERSION }}
-          docker run --cap-add SYS_ADMIN --cap-add MKNOD --device /dev/fuse:mrw -v $(pwd)/bundle:/host/app/bundle spotube_arm:latest
+          docker run -v $(pwd)/bundle:/host/app/bundle spotube_arm:latest
 
       - name: Debug With SSH When fails
         if: ${{ failure() && inputs.debug && inputs.channel == 'nightly' }}
@@ -401,24 +401,6 @@ jobs:
           name: Spotube-Release-Binaries
           path: |
             build/Spotube-macos-universal.dmg
-  
-  # linux_arm:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: |
-  #         sudo apt-get update -y
-  #         sudo apt-get install -y curl
-    
-  #     - name: Extract branch name
-  #       shell: bash
-  #       run: echo "BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
-
-  #     - name: Trigger CircleCI Pipeline
-  #       run: |
-  #         curl -X POST https://circleci.com/api/v2/project/cci-f9azl/spotube/pipeline \
-  #         --header "Circle-Token: ${{secrets.CCI_TOKEN}}" \
-  #         --header "content-type: application/json" \
-  #         --data '{"branch": "${{env.BRANCH}}", "parameters":{"GHA_Action":"true","version":"${{inputs.version}}","channel":"${{inputs.channel}}","dry_run":${{inputs.dry_run}}}}'
 
   upload:
     runs-on: ubuntu-latest
