@@ -1,9 +1,6 @@
 # Use the aarch64 Ubuntu 22.04 as the base image
 FROM arm64v8/ubuntu:22.04
 
-ARG BUILD_VERSION
-
-
 # Set the working directory to /app
 WORKDIR /app
 
@@ -23,22 +20,8 @@ RUN git clone https://github.com/flutter/flutter.git --single-branch --branch=st
 # Copy over all the repository files from the host into the container
 COPY ./ ./
 
-# Run flutter build for Linux ARM
-RUN alias dpkg-deb="dpkg-deb --Zxz" && flutter_distributor package --platform=linux --targets=deb
-RUN flutter_distributor package --platform=linux --targets=rpm
-RUN make tar VERSION=${BUILD_VERSION} ARCH=arm64 PKG_ARCH=aarch64
-
-# Move artifacts
-RUN mkdir bundle &&\
-  mv build/spotube-linux-*-aarch64.tar.xz bundle/ &&\
-  mv dist/**/spotube-*-linux.deb bundle/Spotube-linux-aarch64.deb &&\
-  mv dist/**/spotube-*-linux.rpm bundle/Spotube-linux-aarch64.rpm
-
-RUN mkdir -p /host/app/bundle && \
-  cp -r bundle/* /host/app/bundle
-
-# Set the working directory to /host/app
-WORKDIR /host/app
+ARG BUILD_VERSION
+ENV BUILD_VERSION=${BUILD_VERSION}
 
 # Finish the Dockerfile
-CMD ["echo", "Done!"]
+CMD ["bash", "scripts/build_linux_arm.sh"]
