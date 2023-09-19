@@ -256,7 +256,7 @@ jobs:
           docker buildx build -t spotube_arm:latest -f .github/Dockerfile . \
           --platform linux/arm64 \
           --build-arg BUILD_VERSION=${{ env.BUILD_VERSION }}
-          docker run -v $(pwd)/bundle:/host/app/bundle spotube_arm:latest
+          docker run -v $(pwd)/bundle:/host/app/bundle --platform linux/arm64 spotube_arm:latest
 
       - name: Debug With SSH When fails
         if: ${{ failure() && inputs.debug && inputs.channel == 'nightly' }}
