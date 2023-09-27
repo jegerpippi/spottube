@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -18,10 +19,10 @@ import 'package:spotube/provider/download_manager_provider.dart';
 import 'package:spotube/utils/persisted_state_notifier.dart';
 
 const rootPaths = {
-  0: "/",
-  1: "/search",
-  2: "/library",
-  3: "/lyrics",
+  "/": 0,
+  "/search": 1,
+  "/library": 2,
+  "/lyrics": 3,
 };
 
 class RootApp extends HookConsumerWidget {
@@ -33,12 +34,12 @@ class RootApp extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final index = useState(0);
     final isMounted = useIsMounted();
     final showingDialogCompleter = useRef(Completer()..complete());
     final downloader = ref.watch(downloadManagerProvider);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final theme = Theme.of(context);
+    final location = GoRouterState.of(context).matchedLocation;
 
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -147,13 +148,21 @@ class RootApp extends HookConsumerWidget {
       return null;
     }, [backgroundColor]);
 
+    void onSelectIndexChanged(int d) {
+      final invertedRouteMap =
+          rootPaths.map((key, value) => MapEntry(value, key));
+
+      if (context.mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          GoRouter.of(context).go(invertedRouteMap[d]!);
+        });
+      }
+    }
+
     return Scaffold(
       body: Sidebar(
-        selectedIndex: index.value,
-        onSelectedIndexChanged: (i) {
-          index.value = i;
-          GoRouter.of(context).go(rootPaths[index.value]!);
-        },
+        selectedIndex: rootPaths[location] ?? 0,
+        onSelectedIndexChanged: onSelectIndexChanged,
         child: child,
       ),
       extendBody: true,
@@ -162,11 +171,8 @@ class RootApp extends HookConsumerWidget {
         children: [
           BottomPlayer(),
           SpotubeNavigationBar(
-            selectedIndex: index.value,
-            onSelectedIndexChanged: (selectedIndex) {
-              index.value = selectedIndex;
-              GoRouter.of(context).go(rootPaths[selectedIndex]!);
-            },
+            selectedIndex: rootPaths[location] ?? 0,
+            onSelectedIndexChanged: onSelectIndexChanged,
           ),
         ],
       ),

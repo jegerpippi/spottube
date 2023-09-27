@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:piped_client/piped_client.dart';
+import 'package:spotify/spotify.dart';
 import 'package:spotube/collections/env.dart';
 import 'package:spotube/collections/language_codes.dart';
 import 'package:spotube/collections/spotube_icons.dart';
@@ -46,10 +47,14 @@ class SettingsPage extends HookConsumerWidget {
     }, []);
 
     final pickDownloadLocation = useCallback(() async {
-      final dirStr = await getDirectoryPath(
+      String? dirStr = await getDirectoryPath(
         initialDirectory: preferences.downloadLocation,
       );
       if (dirStr == null) return;
+      if (DesktopTools.platform.isAndroid && dirStr.startsWith("content://")) {
+        dirStr =
+            "/storage/emulated/0/${Uri.decodeFull(dirStr).split("primary:").last}";
+      }
       preferences.setDownloadLocation(dirStr);
     }, [preferences.downloadLocation]);
 
@@ -180,7 +185,7 @@ class SettingsPage extends HookConsumerWidget {
                               ),
                           ],
                         ),
-                        AdaptiveSelectTile<String>(
+                        AdaptiveSelectTile<Market>(
                           breakLayout: mediaQuery.lgAndUp,
                           secondary: const Icon(SpotubeIcons.shoppingBag),
                           title: Text(context.l10n.market_place_region),
@@ -369,8 +374,7 @@ class SettingsPage extends HookConsumerWidget {
                                                       TextSpan(
                                                         text:
                                                             "${e.name.trim()}\n",
-                                                        style: Theme.of(context)
-                                                            .textTheme
+                                                        style: theme.textTheme
                                                             .labelLarge,
                                                       ),
                                                       TextSpan(

@@ -1,4 +1,9 @@
 {
+  "ar": [
+    "use_amoled_dark_theme",
+    "normalize_audio"
+  ],
+
   "bn": [
     "use_amoled_dark_theme",
     "normalize_audio"
@@ -45,6 +50,11 @@
   ],
 
   "ru": [
+    "use_amoled_dark_theme",
+    "normalize_audio"
+  ],
+
+  "uk": [
     "use_amoled_dark_theme",
     "normalize_audio"
   ],

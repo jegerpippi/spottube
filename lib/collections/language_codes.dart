@@ -36,10 +36,10 @@ abstract class LanguageLocals {
     //   name: "Amharic",
     //   nativeName: "አማርኛ",
     // ),
-    // "ar": const ISOLanguageName(
-    //   name: "Arabic",
-    //   nativeName: "العربية",
-    // ),
+    "ar": const ISOLanguageName(
+      name: "Arabic",
+      nativeName: "العربية",
+    ),
     // "an": const ISOLanguageName(
     //   name: "Aragonese",
     //   nativeName: "Aragonés",
@@ -684,10 +684,10 @@ abstract class LanguageLocals {
     //   name: "Uighur, Uyghur",
     //   nativeName: "Uyƣurqə, ئۇيغۇرچە‎",
     // ),
-    // "uk": const ISOLanguageName(
-    //   name: "Ukrainian",
-    //   nativeName: "українська",
-    // ),
+    "uk": const ISOLanguageName(
+      name: "Ukrainian",
+      nativeName: "українська",
+    ),
     // "ur": const ISOLanguageName(
     //   name: "Urdu",
     //   nativeName: "اردو",

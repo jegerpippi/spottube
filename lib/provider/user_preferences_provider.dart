@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_desktop_tools/flutter_desktop_tools.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:spotify/spotify.dart';
 import 'package:spotube/components/settings/color_scheme_picker_dialog.dart';
 import 'package:spotube/models/matched_track.dart';
 import 'package:spotube/provider/palette_provider.dart';
@@ -41,7 +42,7 @@ enum YoutubeApiType {
 
 class UserPreferences extends PersistedChangeNotifier {
   ThemeMode themeMode;
-  String recommendationMarket;
+  Market recommendationMarket;
   bool saveTrackLyrics;
   bool checkUpdate;
   AudioQuality audioQuality;
@@ -118,7 +119,7 @@ class UserPreferences extends PersistedChangeNotifier {
     updatePersistence();
   }
 
-  void setRecommendationMarket(String country) {
+  void setRecommendationMarket(Market country) {
     recommendationMarket = country;
     notifyListeners();
     updatePersistence();
@@ -245,7 +246,10 @@ class UserPreferences extends PersistedChangeNotifier {
   @override
   FutureOr<void> loadFromLocal(Map<String, dynamic> map) async {
     saveTrackLyrics = map["saveTrackLyrics"] ?? false;
-    recommendationMarket = map["recommendationMarket"] ?? recommendationMarket;
+    recommendationMarket = Market.values.firstWhere(
+      (market) =>
+          market.name == (map["recommendationMarket"] ?? recommendationMarket),
+    );
     checkUpdate = map["checkUpdate"] ?? checkUpdate;
 
     themeMode = ThemeMode.values[map["themeMode"] ?? 0];
@@ -305,7 +309,7 @@ class UserPreferences extends PersistedChangeNotifier {
   FutureOr<Map<String, dynamic>> toMap() {
     return {
       "saveTrackLyrics": saveTrackLyrics,
-      "recommendationMarket": recommendationMarket,
+      "recommendationMarket": recommendationMarket.name,
       "themeMode": themeMode.index,
       "accentColorScheme": accentColorScheme.toString(),
       "albumColorSync": albumColorSync,
@@ -342,7 +346,7 @@ class UserPreferences extends PersistedChangeNotifier {
     SearchMode? searchMode,
     bool? skipNonMusic,
     YoutubeApiType? youtubeApiType,
-    String? recommendationMarket,
+    Market? recommendationMarket,
     bool? saveTrackLyrics,
   }) {
     return UserPreferences(
@@ -371,7 +375,7 @@ final userPreferencesProvider = ChangeNotifierProvider(
   (ref) => UserPreferences(
     ref,
     accentColorScheme: SpotubeColor(Colors.blue.value, name: "Blue"),
-    recommendationMarket: 'US',
+    recommendationMarket: Market.US,
     themeMode: ThemeMode.system,
     layoutMode: LayoutMode.adaptive,
   ),
