@@ -5,8 +5,8 @@ FROM --platform=linux/arm64 fischerscode/flutter-sudo:stable
 WORKDIR /app
 
 # Update and install necessary dependencies
-RUN apt-get update && \
-  apt-get install -y wget curl git unzip tar clang cmake ninja-build pkg-config libgtk-3-dev libglu1-mesa-dev make python3-pip python3-setuptools desktop-file-utils libgdk-pixbuf2.0-dev fakeroot strace fuse libunwind-dev locate patchelf gir1.2-appindicator3-0.1 libappindicator3-1 libappindicator3-dev libsecret-1-0 libjsoncpp1 libsecret-1-dev libjsoncpp-dev libnotify-bin libnotify-dev mpv libmpv-dev rpm
+RUN sudo apt-get update &&\
+  sudo apt-get install -y wget curl git unzip tar clang cmake ninja-build pkg-config libgtk-3-dev libglu1-mesa-dev make python3-pip python3-setuptools desktop-file-utils libgdk-pixbuf2.0-dev fakeroot strace fuse libunwind-dev locate patchelf gir1.2-appindicator3-0.1 libappindicator3-1 libappindicator3-dev libsecret-1-0 libjsoncpp1 libsecret-1-dev libjsoncpp-dev libnotify-bin libnotify-dev mpv libmpv-dev rpm
 
 # Define the Flutter SDK paths
 ENV PATH="${PATH}:/root/.pub-cache/bin"
