@@ -2,6 +2,8 @@
 
 alias dpkg-deb="dpkg-deb --Zxz"
 
+dart pub global activate flutter_distributor
+
 flutter_distributor package --platform=linux --targets=deb
 flutter_distributor package --platform=linux --targets=rpm
 make tar VERSION=$BUILD_VERSION ARCH=arm64 PKG_ARCH=aarch64
